@@ -20,5 +20,3 @@ Note: I have only tested this with the language "en"
 ## Example
 
 `cargo run --release -- --username josh --language en --jobs 12`
-
-``
