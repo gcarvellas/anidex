@@ -64,17 +64,22 @@ async fn filter_entries(entries: &[MediaList], language: &str) -> Result<Vec<Unr
     Ok(unread_mangas)
 }
 
-pub async fn filter_unread_manga(username: String, language: &str, workers: usize) -> Result<Vec<UnreadManga>, Box<dyn Error>> {
+pub async fn filter_unread_manga(username: String, language: &str, mut workers: usize) -> Result<Vec<UnreadManga>, Box<dyn Error>> {
     let mangas = get_anilist_entries(username).await?;
     let mut unread_mangas: Vec<UnreadManga> = vec![];
 
     for list in mangas.lists {
 
         let mut handles = vec![];
+        let entries_size = list.entries.len();
+
+        // Only allow one worker per entry
+        if workers > list.entries.len() {
+            workers = list.entries.len();
+        }
 
         for worker_no in 0..workers {
-            let entries_size = list.entries.len();
-            let slice_size = entries_size / workers;
+            let slice_size = ((entries_size as f64) / (workers as f64)).floor() as usize;
             let start = worker_no * slice_size;
             let end = if worker_no == workers - 1 {
                 entries_size
