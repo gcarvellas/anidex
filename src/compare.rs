@@ -13,7 +13,6 @@ pub struct UnreadManga {
 impl std::fmt::Display for UnreadManga {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // TODO make the output nicer
-        // TODO add the url of the chapter the output
         write!(f, "{}: current: {}, latest: {}", generate_terminal_hyperlink(mangadex_title_url(&self.id), &self.title), self.chapter, self.latest)
     }
 }
