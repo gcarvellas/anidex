@@ -6,7 +6,7 @@ use crate::config::ANIDEX_USER_AGENT;
 
 const MANGADEX_MANGA_API_URL: &str = "https://api.mangadex.org/manga"; 
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct MangadexApiResponse {
     result: String,
     response: String,
@@ -52,18 +52,19 @@ pub async fn mangadex_find_id(title: String, anilist_id: u64) -> Result<Option<S
     for entry in res.data {
     
         // Each Manga contains attributers, which has a links section. 'al' is the AniList link
-        match entry.get("attributes").unwrap().get("links").unwrap().get("al") {
+        println!("{:?}", entry.get("attributes").unwrap());
+        let id = match entry.get("attributes").unwrap().get("links").unwrap().get("al") {
 
             // Entry doesn't have an anilist link
             None => continue,
 
             Some(data) => {
-                let id = data.as_str().unwrap().parse::<u64>().unwrap();
-
-                if id == anilist_id {
-                    return Ok(Some(entry.get("id").unwrap().as_str().unwrap().to_string()));
-                }
+                data.as_str().unwrap().parse::<u64>().unwrap()
             }
+        };
+
+        if id == anilist_id {
+            return Ok(Some(entry.get("id").unwrap().as_str().unwrap().to_string()));
         }
     }
 
