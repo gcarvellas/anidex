@@ -59,7 +59,7 @@ pub async fn mangadex_find_id(title: String, anilist_id: u64) -> Result<Option<S
             None => continue,
 
             Some(data) => {
-                data.as_str().unwrap().parse::<u64>().unwrap()
+                data.as_str().unwrap().parse::<u64>()?
             }
         };
 
@@ -96,6 +96,6 @@ pub async fn mangadex_latest_chapter_from_id(id: String, language: &str) -> Resu
         // The manga is a Oneshot so it only has one chapter
         None => 1.0,
 
-        Some(s) => s.parse::<f32>().unwrap()
+        Some(s) => s.parse::<f32>()?
     }))
 }

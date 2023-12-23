@@ -59,7 +59,7 @@ struct PostBody {
 
 // TODO filter out light novels
 const GRAPHQL_QUERY: &str = r#"
-    query ($userName: String) {
+    query ($userName: String]) {
         MediaListCollection (userName: $userName, type: MANGA, status: CURRENT) {
             lists {
                 entries {

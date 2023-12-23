@@ -51,7 +51,7 @@ async fn filter_entries(entries: &[MediaList], language: &str) -> Result<Vec<Unr
             Some(data) => data
         };
 
-        if entry.progress < (latest_chapter as u64).try_into().unwrap() {
+        if entry.progress < (latest_chapter as u64).try_into()? {
             unread_mangas.push(UnreadManga {
                 id,
                 title: title.to_string(),
@@ -92,7 +92,7 @@ async fn get_mangas_from_list_parallel(list: MediaEntries, language: &str, mut w
     }
 
     for handle in handles {
-        unread_mangas.append(&mut handle.await.unwrap());
+        unread_mangas.append(&mut handle.await?);
     }
 
     Ok(unread_mangas)
