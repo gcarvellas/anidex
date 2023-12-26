@@ -52,7 +52,6 @@ pub async fn mangadex_find_id(title: String, anilist_id: u64) -> Result<Option<S
     for entry in res.data {
     
         // Each Manga contains attributers, which has a links section. 'al' is the AniList link
-        println!("{:?}", entry.get("attributes").unwrap());
         let id = match entry.get("attributes").unwrap().get("links").unwrap().get("al") {
 
             // Entry doesn't have an anilist link
