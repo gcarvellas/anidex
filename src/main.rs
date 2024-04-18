@@ -1,3 +1,5 @@
+#![deny(warnings)]
+
 use compare::filter_unread_manga;
 use clap::Parser;
 

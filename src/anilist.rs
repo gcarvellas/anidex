@@ -1,4 +1,3 @@
-use std::error::Error;
 use reqwest::{header::USER_AGENT, RequestBuilder, Response, StatusCode};
 use serde::{Serialize, Deserialize};
 use std::thread::sleep;
@@ -8,53 +7,59 @@ use async_recursion::async_recursion;
 use crate::config::ANIDEX_USER_AGENT;
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MediaTitle {
-    pub romaji: String
+pub struct MediaTitle<'a> {
+    pub romaji: &'a str
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Media {
+pub struct Media<'a> {
     pub id: u64,
-    pub title: MediaTitle,
+    #[serde(borrow)]
+    pub title: MediaTitle<'a>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MediaList {
+pub struct MediaList<'a> {
     pub progress: u16,
-    pub media: Media
+    #[serde(borrow)]
+    pub media: Media<'a>
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct MediaEntries {
-    pub entries: Vec<MediaList>
+pub struct MediaEntries<'a> {
+    #[serde(borrow)]
+    pub entries: Vec<MediaList<'a>>
 }
     
 #[derive(Serialize, Deserialize)]
-pub struct MediaLists {
-    pub lists: Vec<MediaEntries>
+pub struct MediaLists<'a> {
+    #[serde(borrow)]
+    pub lists: Vec<MediaEntries<'a>>
 }
 
 #[derive(Serialize, Deserialize)]
-#[allow(non_snake_case)]
-pub struct AniListData {
-    pub MediaListCollection: MediaLists
+#[serde(rename_all = "PascalCase")]
+pub struct AniListData<'a> {
+    #[serde(borrow)]
+    pub media_list_collection: MediaLists<'a>
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GraphQLResponse {
-    pub data: AniListData
+pub struct GraphQLResponse<'a> {
+    #[serde(borrow)]
+    pub data: AniListData<'a>
 }
 
 #[derive(Serialize, Deserialize)]
-#[allow(non_snake_case)]
-struct GraphQLVariables {
-    userName: String
+#[serde(rename_all = "camelCase")]
+struct GraphQLVariables<'a> {
+    user_name: &'a str
 }
 
 #[derive(Serialize, Deserialize)]
-struct PostBody {
-    variables: GraphQLVariables,
-    query: String
+struct PostBody<'a> {
+    variables: GraphQLVariables<'a>,
+    query: &'a str
 }
 
 // TODO filter out light novels
@@ -97,12 +102,12 @@ async fn anilist_post_request(client: RequestBuilder) -> Result<Response, reqwes
     };
 }
 
-pub async fn get_anilist_entries(username: String) -> Result<MediaLists, Box<dyn Error>> {
+pub async fn get_anilist_entries<'a, S: Into<String>>(user_name: S) -> Result<MediaLists<'a>, reqwest::Error> {
     let post_body = PostBody {
         variables: GraphQLVariables {
-            userName: username,
+            user_name: &user_name.into(),
         },
-        query: GRAPHQL_QUERY.to_string()
+        query: GRAPHQL_QUERY
     };
     
     let request = reqwest::Client::new()
@@ -111,5 +116,5 @@ pub async fn get_anilist_entries(username: String) -> Result<MediaLists, Box<dyn
 
     let response = anilist_post_request(request).await?;
     let res: GraphQLResponse = response.json().await?;
-    Ok(res.data.MediaListCollection)
+    Ok(res.data.media_list_collection)
 }

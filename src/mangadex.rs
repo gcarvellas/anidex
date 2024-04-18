@@ -36,11 +36,11 @@ async fn mangadex_get_request(client: RequestBuilder) -> Result<Response, reqwes
     };
 }
 
-pub async fn mangadex_find_id(title: String, anilist_id: u64) -> Result<Option<String>, Box<dyn Error>> {
+pub async fn mangadex_find_id(title: &str, anilist_id: u64) -> Result<Option<String>, Box<dyn Error>> {
 
     // MangaDex by default orders by relevance on their website, but even that can be inaccurate.
     // followedCount usually requires less checks of the anilist ID
-    let params = [("title", title.as_str()), ("order[followedCount]", "desc")];
+    let params = [("title", title), ("order[followedCount]", "desc")];
 
     let url = reqwest::Url::parse_with_params(MANGADEX_MANGA_API_URL, &params)?;
     let request = reqwest::Client::new()
@@ -70,8 +70,12 @@ pub async fn mangadex_find_id(title: String, anilist_id: u64) -> Result<Option<S
     return Ok(None);
 }
 
-pub async fn mangadex_latest_chapter_from_id(id: String, language: &str) -> Result<Option<f32>, Box<dyn Error>> {
-    let params = [("translatedLanguage[]", language), ("order[chapter]", "desc"), ("limit", "1")];
+pub async fn mangadex_latest_chapter_from_id(id: &str, language: &str) -> Result<Option<f32>, Box<dyn Error>> {
+    let params = [
+        ("translatedLanguage[]", language),
+        ("order[chapter]", "desc"),
+        ("limit", "1")
+    ];
     let manga_feed_url = format!("https://api.mangadex.org/manga/{}/feed", id);
     let url = reqwest::Url::parse_with_params(
         &manga_feed_url,
