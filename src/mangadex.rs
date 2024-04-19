@@ -63,7 +63,7 @@ pub async fn mangadex_find_id<'a>(title: &str, anilist_id: u64) -> Result<Option
         };
 
         if id == anilist_id {
-            return Ok(Some(entry.get("id").unwrap().to_string()));
+            return Ok(Some(entry.get("id").unwrap().as_str().unwrap().to_string()));
         }
     }
 
