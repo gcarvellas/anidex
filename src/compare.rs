@@ -30,12 +30,12 @@ fn mangadex_title_url(title_id: &str) -> String {
     format!("https://mangadex.org/title/{}", title_id)
 }
 
-async fn filter_entries(entries: &[MediaList<'_>], language: Arc<String>) -> Result<Vec<UnreadManga>, Box<dyn Error>> {
+async fn filter_entries(entries: &[MediaList], language: Arc<String>) -> Result<Vec<UnreadManga>, Box<dyn Error>> {
     let mut unread_mangas: Vec<UnreadManga> = vec![];
 
     for entry in entries.iter() {
         let title = &entry.media.title.romaji;
-        let id = match mangadex_find_id(title.clone(), entry.media.id).await? {
+        let id = match mangadex_find_id(title, entry.media.id).await? {
 
             // Ignore mangas that are on anilist but not mangadex
             None => continue,
@@ -64,13 +64,12 @@ async fn filter_entries(entries: &[MediaList<'_>], language: Arc<String>) -> Res
     Ok(unread_mangas)
 }
 
-// TODO try removing the 'static
-async fn get_mangas_from_list_parallel<'a>(list: Arc<MediaEntries<'static>>, language: Arc<String>, mut workers: usize) -> Result<Vec<UnreadManga>, Box<dyn Error>> {
+async fn get_mangas_from_list_parallel<'a>(list: Arc<MediaEntries>, language: Arc<String>, mut workers: usize) -> Result<Vec<UnreadManga>, Box<dyn Error>> {
     let mut unread_mangas: Vec<UnreadManga> = vec![];
     let mut handles = vec![];
     let entries_size = list.entries.len();
 
-    // Only allow one worker per entry
+    // Prevent having more workers than entries
     workers = std::cmp::min(entries_size, workers);
 
     let slice_size: usize = entries_size / workers;

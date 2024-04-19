@@ -36,7 +36,7 @@ async fn mangadex_get_request(client: RequestBuilder) -> Result<Response, reqwes
     };
 }
 
-pub async fn mangadex_find_id(title: &str, anilist_id: u64) -> Result<Option<String>, Box<dyn Error>> {
+pub async fn mangadex_find_id<'a>(title: &str, anilist_id: u64) -> Result<Option<String>, Box<dyn Error>> {
 
     // MangaDex by default orders by relevance on their website, but even that can be inaccurate.
     // followedCount usually requires less checks of the anilist ID
@@ -63,7 +63,7 @@ pub async fn mangadex_find_id(title: &str, anilist_id: u64) -> Result<Option<Str
         };
 
         if id == anilist_id {
-            return Ok(Some(entry.get("id").unwrap().as_str().unwrap().to_string()));
+            return Ok(Some(entry.get("id").unwrap().to_string()));
         }
     }
 
