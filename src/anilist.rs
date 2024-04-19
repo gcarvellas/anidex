@@ -1,4 +1,3 @@
-use std::error::Error;
 use reqwest::{header::USER_AGENT, RequestBuilder, Response, StatusCode};
 use serde::{Serialize, Deserialize};
 use std::thread::sleep;
@@ -7,18 +6,18 @@ use async_recursion::async_recursion;
 
 use crate::config::ANIDEX_USER_AGENT;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct MediaTitle {
     pub romaji: String
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Media {
     pub id: u64,
     pub title: MediaTitle,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct MediaList {
     pub progress: u16,
     pub media: Media
@@ -35,9 +34,9 @@ pub struct MediaLists {
 }
 
 #[derive(Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[serde(rename_all = "PascalCase")]
 pub struct AniListData {
-    pub MediaListCollection: MediaLists
+    pub media_list_collection: MediaLists
 }
 
 #[derive(Serialize, Deserialize)]
@@ -46,15 +45,15 @@ pub struct GraphQLResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-#[allow(non_snake_case)]
-struct GraphQLVariables {
-    userName: String
+#[serde(rename_all = "camelCase")]
+struct GraphQLVariables<'a> {
+    user_name: &'a str
 }
 
 #[derive(Serialize, Deserialize)]
-struct PostBody {
-    variables: GraphQLVariables,
-    query: String
+struct PostBody<'a> {
+    variables: GraphQLVariables<'a>,
+    query: &'a str
 }
 
 // TODO filter out light novels
@@ -80,7 +79,7 @@ const ANILIST_API_URL: &str = "https://graphql.anilist.co";
 #[async_recursion(?Send)]
 async fn anilist_post_request(client: RequestBuilder) -> Result<Response, reqwest::Error> {
 
-    let response = client.try_clone().unwrap().header(USER_AGENT, ANIDEX_USER_AGENT)
+    let response = client.try_clone().unwrap()
                          .send()
                          .await?;
 
@@ -97,19 +96,20 @@ async fn anilist_post_request(client: RequestBuilder) -> Result<Response, reqwes
     };
 }
 
-pub async fn get_anilist_entries(username: String) -> Result<MediaLists, Box<dyn Error>> {
+pub async fn get_anilist_entries<'a, S: Into<String>>(user_name: S) -> Result<MediaLists, reqwest::Error> {
     let post_body = PostBody {
         variables: GraphQLVariables {
-            userName: username,
+            user_name: &user_name.into(),
         },
-        query: GRAPHQL_QUERY.to_string()
+        query: GRAPHQL_QUERY
     };
     
     let request = reqwest::Client::new()
         .post(ANILIST_API_URL)
+        .header(USER_AGENT, ANIDEX_USER_AGENT)
         .json(&post_body);
 
     let response = anilist_post_request(request).await?;
     let res: GraphQLResponse = response.json().await?;
-    Ok(res.data.MediaListCollection)
+    Ok(res.data.media_list_collection)
 }
